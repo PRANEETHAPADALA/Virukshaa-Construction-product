@@ -1,14 +1,10 @@
 import Sidebar from "@/components/Sidebar";
-import Employee  from "@/components/Employee/Employee";
-
 
 export default function Page() {
   return (
-    <div className="flex">
+    <div >
       <Sidebar />
-      <main className="flex-1 overflow-auto">
-        <Employee />
-      </main>
+      {/* Sidebar itself handles content rendering */}
     </div>
-  )
+  );
 }

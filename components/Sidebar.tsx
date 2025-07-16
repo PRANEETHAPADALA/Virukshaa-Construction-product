@@ -14,10 +14,8 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
-import EmployeeList from "./Employee/EmployeeList";
-import AddEmployee from "./Employee/AddEmployee";
-import EditEmployeeModal from "./Employee/EditEmployeeModal";
-import { Employee as EmployeeType } from "./Employee/type";
+import Setting from "./Setting/settings";
+import Employee from "./Employee/Employee"; // This should include EmployeeList logic internally
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard },
@@ -36,42 +34,43 @@ const navItems = [
 export default function Sidebar() {
   const [activeItem, setActiveItem] = useState("Employee Management");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [employees, setEmployees] = useState<EmployeeType[]>([]);
-  const [editingEmployee, setEditingEmployee] = useState<EmployeeType | null>(null);
 
-  const handleAddEmployee = (newEmployee: EmployeeType) => {
-    setEmployees((prev) => [...prev, newEmployee]);
-    setShowAddForm(false);
-  };
-
-  const handleEditEmployee = (updated: EmployeeType) => {
-    setEmployees((prev) => prev.map((emp) => (emp.id === updated.id ? updated : emp)));
-    setEditingEmployee(null);
+  const renderContent = () => {
+    if (activeItem === "Employee Management") {
+      return <Employee />;
+    } 
+    else if (activeItem === "System Settings") {
+      return <Setting />;
+    } 
+    else {
+      return (
+        <div className="text-center text-gray-500 mt-20 text-xl font-semibold">
+          🚧 {activeItem} is Under Construction 🚧
+        </div>
+      );
+    }
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-gray-50">
       {/* Sidebar */}
       <div
-  className={`${
-    sidebarOpen ? "block" : "hidden"
-  } md:block w-64 border-r bg-white flex flex-col justify-between z-10 fixed md:relative h-full`}
->
-
+        className={`${
+          sidebarOpen ? "block" : "hidden"
+        } md:block w-64 border-r bg-white flex flex-col justify-between z-10 fixed md:relative h-full`}
+      >
         <div className="fixed">
           <div className="p-4 font-bold text-lg flex items-center gap-2 justify-between">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-blue-600 text-white flex items-center justify-center rounded-full text-sm">
                 D
               </div>
-              <span>Dashboard <span className="text-xs text-gray-400 ml-1">v2.0</span></span>
+              <span>
+                Dashboard <span className="text-xs text-gray-400 ml-1">v2.0</span>
+              </span>
             </div>
             <div className="md:hidden">
-              <button
-                onClick={() => setSidebarOpen(false)}
-                className="text-gray-700"
-              >
+              <button onClick={() => setSidebarOpen(false)} className="text-gray-700">
                 <X size={24} />
               </button>
             </div>
@@ -98,25 +97,28 @@ export default function Sidebar() {
               </button>
             ))}
           </nav>
-          <div className="p-4 border-t text-sm text-gray-600">
-          <div className="font-medium">admin</div>
-          <div className="text-xs text-gray-500">Super Admin</div>
-        </div>
-        </div>
 
-        
+          <div className="p-4 border-t text-sm text-gray-600">
+            <div className="font-medium">admin</div>
+            <div className="text-xs text-gray-500">Super Admin</div>
+          </div>
+        </div>
       </div>
 
-      {/* Content */}
-      <div className={`flex-1 p-4 transition-all duration-300 S`}>
+      {/* Main Content */}
+      <div className="flex p-6 ml-0 md:ml-2  transition-all duration-300">
+        {/* Mobile Toggle Button */}
         <div className="md:hidden mb-4">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="text-gray-700"
           >
-            {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
+            {sidebarOpen ? <X size={64} /> : <Menu size={64} />}
           </button>
         </div>
+
+        {/* Dynamic Content Rendered */}
+        {renderContent()}
       </div>
     </div>
   );
