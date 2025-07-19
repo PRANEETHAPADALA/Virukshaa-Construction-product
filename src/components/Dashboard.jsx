@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import StatsCards from './StatsCards';
 import QuickStats from './QuickStats';
@@ -15,6 +16,7 @@ import { LuLogOut } from 'react-icons/lu';
 import './Dashboard.css';
 
 function Dashboard() {
+  const navigate = useNavigate();
   const [showEmployeeForm, setShowEmployeeForm] = useState(false);
   const [showMaterialForm, setShowMaterialForm] = useState(false);
   const [showUsageForm, setShowUsageForm] = useState(false);
@@ -26,6 +28,11 @@ function Dashboard() {
     { name: 'David Brown', role: 'Laborer', rate: 100, status: 'Absent' },
     { name: 'Chris Wilson', role: 'Electrician', rate: 140, status: 'Present' },
   ];
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/login');
+  };
 
   return (
     <div className="dashboard-page">
@@ -39,20 +46,18 @@ function Dashboard() {
                 <h1>Dashboard</h1>
                 <p>Overview of your construction site operations</p>
               </div>
-              <button className="logout-button">
+              <button className="logout-button" onClick={handleLogout}>
                 <LuLogOut className="logout-icon" />
                 Logout
               </button>
             </div>
           </div>
 
-         
           <StatsCards
             selectedCard={selectedCard}
             onCardClick={(title) => setSelectedCard(title)}
           />
 
-        
           <div className="info-box">
             {selectedCard === 'Employees' ? (
               <EmployeeTable employees={employees} />
@@ -76,7 +81,6 @@ function Dashboard() {
             )}
           </div>
 
-         
           <QuickActions
             onAddEmployee={() => setShowEmployeeForm(true)}
             onAddMaterial={() => setShowMaterialForm(true)}
@@ -84,7 +88,6 @@ function Dashboard() {
           />
         </div>
       </div>
-
 
       {showEmployeeForm && (
         <div className="popup-overlay">
@@ -94,7 +97,6 @@ function Dashboard() {
         </div>
       )}
 
-    
       {showMaterialForm && (
         <div className="popup-overlay">
           <div className="popup-box">
@@ -103,7 +105,6 @@ function Dashboard() {
         </div>
       )}
 
-     
       {showUsageForm && (
         <div className="popup-overlay">
           <div className="popup-box">
