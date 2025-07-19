@@ -1,37 +1,17 @@
-import React, { useState } from 'react';
+// SupervisorDashboard.jsx
+import React, { useEffect, useState } from 'react';
 import './SupervisorDashboard.css';
 import './CommonForm.css';
 import Sidebar from './Sidebar';
 import { FiCalendar, FiUsers, FiClock, FiPlus } from 'react-icons/fi';
+import axios from 'axios';
 
 const SupervisorDashboard = () => {
+  const [tasks, setTasks] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [updates, setUpdates] = useState([]);
   const [showTaskForm, setShowTaskForm] = useState(false);
-
-  const [tasks, setTasks] = useState([
-    {
-      title: 'Foundation Work',
-      project: 'Residential Tower',
-      assignedTo: 'John Smith',
-      progress: 65,
-      status: 'in progress',
-    },
-    {
-      title: 'Electrical Wiring',
-      project: 'Office Complex',
-      assignedTo: 'Chris Wilson',
-      progress: 0,
-      status: 'not started',
-    },
-    {
-      title: 'Material Delivery',
-      project: 'Shopping Mall',
-      assignedTo: 'David Brown',
-      progress: 30,
-      status: 'in progress',
-    },
-  ]);
-
-  const [employees] = useState(['John Smith', 'Chris Wilson', 'David Brown']);
+  const supervisorId = localStorage.getItem('supervisorId');
 
   const [formData, setFormData] = useState({
     employee: '',
@@ -39,8 +19,6 @@ const SupervisorDashboard = () => {
     hours: '',
     description: '',
   });
-
-  const [updates, setUpdates] = useState([]);
 
   const [newTask, setNewTask] = useState({
     title: '',
@@ -52,22 +30,50 @@ const SupervisorDashboard = () => {
     description: '',
   });
 
-  const handleNewTaskSubmit = (e) => {
-    e.preventDefault();
-    setTasks([...tasks, newTask]);
-    setNewTask({
-      title: '',
-      project: '',
-      assignedTo: '',
-      status: 'Not Started',
-      progress: 0,
-      dueDate: '',
-      description: '',
-    });
-    setShowTaskForm(false);
+  useEffect(() => {
+    fetchTasks();
+    fetchEmployees();
+  }, []);
+
+  const fetchTasks = async () => {
+    try {
+      const res = await axios.get(`http://localhost:5000/api/supervisors/${supervisorId}/tasks`);
+      setTasks(res.data);
+    } catch (err) {
+      console.error('Error fetching tasks', err);
+    }
   };
 
-  const handleLogWork = () => {
+  const fetchEmployees = async () => {
+    try {
+      const res = await axios.get(`http://localhost:5000/api/supervisors/${supervisorId}/employees`);
+      setEmployees(res.data.map(emp => emp.name));
+    } catch (err) {
+      console.error('Error fetching employees', err);
+    }
+  };
+
+  const handleNewTaskSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await axios.post(`http://localhost:5000/api/supervisors/${supervisorId}/tasks`, newTask);
+      setTasks(res.data);
+      setShowTaskForm(false);
+      setNewTask({
+        title: '',
+        project: '',
+        assignedTo: '',
+        status: 'Not Started',
+        progress: 0,
+        dueDate: '',
+        description: '',
+      });
+    } catch (err) {
+      console.error('Task creation failed', err);
+    }
+  };
+
+  const handleLogWork = async () => {
     if (!formData.employee || !formData.task || !formData.hours) return;
     const newUpdate = {
       ...formData,
@@ -75,6 +81,13 @@ const SupervisorDashboard = () => {
     };
     setUpdates([newUpdate, ...updates]);
     setFormData({ employee: '', task: '', hours: '', description: '' });
+
+    try {
+      await axios.patch(`http://localhost:5000/api/supervisors/${supervisorId}/tasks/update-work`, newUpdate);
+      fetchTasks();
+    } catch (err) {
+      console.error('Work log failed', err);
+    }
   };
 
   return (
@@ -89,24 +102,20 @@ const SupervisorDashboard = () => {
             <div className="icon-container"><FiCalendar /></div>
             <h3>Active Tasks</h3>
             <p className="card-value">{tasks.length}</p>
-            <span className="card-sub">
-              In progress: {tasks.filter(t => t.status === 'in progress').length}
-            </span>
+            <span className="card-sub">In progress: {tasks.filter(t => t.status.toLowerCase() === 'in progress').length}</span>
           </div>
 
           <div className="top-card">
             <div className="icon-container"><FiUsers /></div>
             <h3>Team Members</h3>
             <p className="card-value">{employees.length}</p>
-            <span className="card-sub">3 present today</span>
+            <span className="card-sub">{employees.length} present today</span>
           </div>
 
           <div className="top-card">
             <div className="icon-container"><FiClock /></div>
             <h3>Labor Hours</h3>
-            <p className="card-value">
-              {updates.reduce((sum, u) => sum + Number(u.hours || 0), 0)}
-            </p>
+            <p className="card-value">{updates.reduce((sum, u) => sum + Number(u.hours || 0), 0)}</p>
             <span className="card-sub">Hours logged today</span>
           </div>
         </div>
@@ -133,7 +142,6 @@ const SupervisorDashboard = () => {
             ))}
           </div>
 
-
           <div className="log-work-section">
             <h2>Update Labor Work</h2>
             <p className="log-subtext">Log hours and update work progress</p>
@@ -142,10 +150,7 @@ const SupervisorDashboard = () => {
               <div className="form-row">
                 <label>Employee</label>
                 <div className="input-box">
-                  <select
-                    value={formData.employee}
-                    onChange={(e) => setFormData({ ...formData, employee: e.target.value })}
-                  >
+                  <select value={formData.employee} onChange={(e) => setFormData({ ...formData, employee: e.target.value })}>
                     <option value="">Select employee</option>
                     {employees.map((emp, i) => (
                       <option key={i}>{emp}</option>
@@ -157,10 +162,7 @@ const SupervisorDashboard = () => {
               <div className="form-row">
                 <label>Task</label>
                 <div className="input-box">
-                  <select
-                    value={formData.task}
-                    onChange={(e) => setFormData({ ...formData, task: e.target.value })}
-                  >
+                  <select value={formData.task} onChange={(e) => setFormData({ ...formData, task: e.target.value })}>
                     <option value="">Select task</option>
                     {tasks.map((t, i) => (
                       <option key={i}>{t.title}</option>
@@ -172,23 +174,14 @@ const SupervisorDashboard = () => {
               <div className="form-row">
                 <label>Hours Worked</label>
                 <div className="input-box">
-                  <input
-                    type="number"
-                    placeholder="Enter hours"
-                    value={formData.hours}
-                    onChange={(e) => setFormData({ ...formData, hours: e.target.value })}
-                  />
+                  <input type="number" value={formData.hours} onChange={(e) => setFormData({ ...formData, hours: e.target.value })} />
                 </div>
               </div>
 
               <div className="form-row">
                 <label>Work Description</label>
                 <div className="input-box">
-                  <textarea
-                    placeholder="Describe the work completed"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  />
+                  <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })}></textarea>
                 </div>
               </div>
 
@@ -214,7 +207,6 @@ const SupervisorDashboard = () => {
           </div>
         </div>
 
-
         {showTaskForm && (
           <div className="form-modal">
             <div className="form-box">
@@ -222,21 +214,18 @@ const SupervisorDashboard = () => {
               <form className="common-form" onSubmit={handleNewTaskSubmit}>
                 <h2>Add New Task</h2>
                 <p>Create a new construction task</p>
-
                 <div className="form-row">
                   <label>Task Title</label>
                   <div className="input-box">
                     <input type="text" required value={newTask.title} onChange={(e) => setNewTask({ ...newTask, title: e.target.value })} />
                   </div>
                 </div>
-
                 <div className="form-row">
                   <label>Project</label>
                   <div className="input-box">
                     <input type="text" required value={newTask.project} onChange={(e) => setNewTask({ ...newTask, project: e.target.value })} />
                   </div>
                 </div>
-
                 <div className="form-row">
                   <label>Assign To</label>
                   <div className="input-box">
@@ -248,7 +237,6 @@ const SupervisorDashboard = () => {
                     </select>
                   </div>
                 </div>
-
                 <div className="form-row">
                   <label>Status</label>
                   <div className="input-box">
@@ -259,28 +247,24 @@ const SupervisorDashboard = () => {
                     </select>
                   </div>
                 </div>
-
                 <div className="form-row">
                   <label>Progress: {newTask.progress}%</label>
                   <div className="input-box">
                     <input type="range" min="0" max="100" value={newTask.progress} onChange={(e) => setNewTask({ ...newTask, progress: e.target.value })} />
                   </div>
                 </div>
-
                 <div className="form-row">
                   <label>Due Date</label>
                   <div className="input-box">
                     <input type="date" value={newTask.dueDate} onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })} />
                   </div>
                 </div>
-
                 <div className="form-row">
                   <label>Description</label>
                   <div className="input-box">
                     <textarea value={newTask.description} onChange={(e) => setNewTask({ ...newTask, description: e.target.value })} />
                   </div>
                 </div>
-
                 <div className="form-btns">
                   <button type="button" className="cancel-btn" onClick={() => setShowTaskForm(false)}>Cancel</button>
                   <button type="submit" className="submit-btn">Create Task</button>
