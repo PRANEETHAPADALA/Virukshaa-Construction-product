@@ -8,7 +8,7 @@ const Sidebar = () => {
   const location = useLocation();
 
   const items = [
-    { label: 'Dashboard', icon: <LuGauge />, path: '/' },
+    { label: 'Dashboard', icon: <LuGauge />, path: '/dashboard' },
     { label: 'Daily Attendance', icon: <LuUsers />, path: '/daily-attendance' },
     { label: 'Monthly Attendance', icon: <LuCalendarDays />, path: '/monthly-attendance' },
     { label: 'Supervisor', icon: <LuHardHat />, path: '/supervisor' },
